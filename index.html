@@ -628,11 +628,48 @@
     /* Floating hearts animation */
     .float-heart {
       position: fixed; pointer-events: none; z-index: 9999;
-      font-size: 24px; animation: floatUp 1.2s ease forwards;
+      animation: floatUp 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      user-select: none;
     }
     @keyframes floatUp {
-      0%   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-      100% { opacity: 0; transform: translateY(-120px) scale(1.5) rotate(20deg); }
+      0%   { opacity: 1; transform: translateY(0) scale(0.5) rotate(-10deg); filter: drop-shadow(0 0 8px rgba(255,100,100,0.8)); }
+      20%  { opacity: 1; transform: translateY(-30px) scale(1.3) rotate(5deg); filter: drop-shadow(0 0 20px rgba(255,100,100,1)); }
+      60%  { opacity: 0.9; transform: translateY(-90px) scale(1) rotate(-5deg); filter: drop-shadow(0 0 12px rgba(255,100,100,0.6)); }
+      100% { opacity: 0; transform: translateY(-160px) scale(0.6) rotate(15deg); filter: drop-shadow(0 0 0px transparent); }
+    }
+
+    /* Big center heart burst (Instagram style) */
+    .heart-burst {
+      position: fixed; pointer-events: none; z-index: 9998;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 120px;
+      animation: heartBurst 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      user-select: none;
+      filter: drop-shadow(0 0 30px rgba(255,80,80,0.9));
+    }
+    @keyframes heartBurst {
+      0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; filter: drop-shadow(0 0 40px rgba(255,80,80,1)); }
+      40%  { transform: translate(-50%,-50%) scale(1.2); opacity: 1; filter: drop-shadow(0 0 60px rgba(255,80,80,0.9)); }
+      65%  { transform: translate(-50%,-50%) scale(0.95); opacity: 1; }
+      80%  { transform: translate(-50%,-50%) scale(1.05); opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(1.1); opacity: 0; }
+    }
+
+    /* Shine ring around big heart */
+    .heart-shine {
+      position: fixed; pointer-events: none; z-index: 9997;
+      left: 50%; top: 50%;
+      width: 200px; height: 200px;
+      margin-left: -100px; margin-top: -100px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,100,100,0.5) 0%, rgba(255,100,100,0) 70%);
+      animation: shinePulse 0.9s ease forwards;
+    }
+    @keyframes shinePulse {
+      0%   { transform: scale(0); opacity: 1; }
+      50%  { transform: scale(2); opacity: 0.7; }
+      100% { transform: scale(3); opacity: 0; }
     }
 
     /* ══════════════════════════════════════════
@@ -1223,18 +1260,35 @@
   });
 
   function spawnFloatingHearts(btn) {
+    // Big center burst (Instagram style)
+    const burst = document.createElement('div');
+    burst.className = 'heart-burst';
+    burst.textContent = '❤️';
+    document.body.appendChild(burst);
+    const shine = document.createElement('div');
+    shine.className = 'heart-shine';
+    document.body.appendChild(shine);
+    setTimeout(() => { burst.remove(); shine.remove(); }, 900);
+
+    // Many small hearts flying up from button
     const rect = btn.getBoundingClientRect();
-    const emojis = ['❤️','🧡','💛','💜','💙'];
-    for (let i = 0; i < 5; i++) {
+    const emojis = ['❤️','🧡','💛','💜','💙','🩷','🔥','✨'];
+    const count = 12;
+    for (let i = 0; i < count; i++) {
       setTimeout(() => {
         const el = document.createElement('div');
         el.className = 'float-heart';
+        const size = 18 + Math.random() * 28;
+        el.style.fontSize = size + 'px';
         el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-        el.style.left = (rect.left + rect.width/2 + (Math.random()-0.5)*60) + 'px';
-        el.style.top  = (rect.top + window.scrollY - 10) + 'px';
+        const spread = 120;
+        el.style.left = (rect.left + rect.width/2 + (Math.random()-0.5) * spread) + 'px';
+        el.style.top  = (rect.top + window.scrollY + (Math.random()-0.5) * 30) + 'px';
+        el.style.animationDuration = (1.0 + Math.random() * 0.8) + 's';
+        el.style.animationDelay = (Math.random() * 0.3) + 's';
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 1200);
-      }, i * 100);
+        setTimeout(() => el.remove(), 2000);
+      }, i * 60);
     }
   }
 
