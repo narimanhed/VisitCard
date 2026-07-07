@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Nariman VisitCard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',sans-serif;background:#0d0f14;color:#e2e8f0;min-height:100vh;}
+
+    /* ── LOGIN ── */
+    #loginScreen{
+      position:fixed;inset:0;z-index:100;
+      display:flex;align-items:center;justify-content:center;
+      background:#0d0f14;
+    }
+    #loginScreen.hidden{display:none;}
+    .login-card{
+      background:#10131c;border:1px solid rgba(255,255,255,0.08);
+      border-radius:20px;padding:40px 36px;width:100%;max-width:380px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;
+    }
+    .login-logo{
+      width:60px;height:60px;border-radius:18px;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;
+      margin:0 auto 20px;
+    }
+    .login-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+    .login-sub{font-size:13px;color:#64748b;margin-bottom:28px;}
+    .login-input{
+      width:100%;padding:12px 16px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);
+      color:#e2e8f0;font-size:14px;font-family:'Inter',sans-serif;
+      outline:none;text-align:center;letter-spacing:3px;
+      transition:border-color 0.2s;margin-bottom:12px;
+    }
+    .login-input:focus{border-color:#6366f1;}
+    .login-btn{
+      width:100%;padding:12px;border-radius:12px;border:none;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      color:#fff;font-size:14px;font-weight:600;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:opacity 0.2s;
+    }
+    .login-btn:hover{opacity:0.85;}
+    .login-err{font-size:12px;color:#ef4444;margin-top:8px;min-height:18px;}
+
+    /* ── TOPBAR ── */
+    .topbar{
+      background:#10131c;border-bottom:1px solid rgba(255,255,255,0.07);
+      padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+    }
+    .topbar-left{display:flex;align-items:center;gap:12px;}
+    .tb-logo{
+      width:32px;height:32px;border-radius:9px;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:#fff;
+    }
+    .tb-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;}
+    .tb-badge{
+      padding:3px 10px;border-radius:20px;
+      background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);
+      font-size:11px;font-weight:600;color:#818cf8;
+    }
+    .topbar-right{display:flex;align-items:center;gap:10px;}
+    .refresh-btn,.logout-btn{
+      padding:7px 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.05);color:#94a3b8;
+      font-size:12px;font-weight:500;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all 0.2s;
+    }
+    .refresh-btn:hover{background:rgba(99,102,241,0.15);color:#818cf8;border-color:rgba(99,102,241,0.3);}
+    .logout-btn:hover{background:rgba(239,68,68,0.1);color:#f87171;border-color:rgba(239,68,68,0.3);}
+
+    /* ── MAIN ── */
+    .main{max-width:800px;margin:0 auto;padding:32px 20px 60px;}
+
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+    .stat-card{
+      background:#10131c;border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px;padding:18px 20px;
+    }
+    .stat-num{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;
+      background:linear-gradient(135deg,#6366f1,#a78bfa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .stat-lbl{font-size:12px;color:#64748b;margin-top:2px;}
+
+    /* Tabs */
+    .tabs{display:flex;gap:4px;margin-bottom:20px;
+      background:#10131c;border:1px solid rgba(255,255,255,0.07);
+      border-radius:12px;padding:4px;}
+    .tab-btn{
+      flex:1;padding:9px;border-radius:9px;border:none;background:transparent;
+      color:#64748b;font-size:13px;font-weight:600;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all 0.2s;
+    }
+    .tab-btn.active{background:rgba(99,102,241,0.2);color:#818cf8;}
+    .tab-btn:hover:not(.active){background:rgba(255,255,255,0.05);color:#94a3b8;}
+
+    /* Message cards */
+    .msg-list{display:flex;flex-direction:column;gap:12px;}
+    .msg-card{
+      background:#10131c;border:1px solid rgba(255,255,255,0.07);
+      border-radius:16px;padding:20px;
+      transition:border-color 0.2s;
+      animation:fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .msg-card:hover{border-color:rgba(99,102,241,0.3);}
+    .msg-card.approved{border-left:3px solid #22c55e;}
+    .msg-card.pending{border-left:3px solid #f59e0b;}
+
+    .msg-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .msg-avatar{
+      width:36px;height:36px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,#6366f1,#a78bfa);
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;color:#fff;
+    }
+    .msg-meta{flex:1;min-width:0;}
+    .msg-name{font-size:14px;font-weight:600;color:#e2e8f0;}
+    .msg-date{font-size:11px;color:#64748b;margin-top:1px;}
+    .msg-status-badge{
+      padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0;
+    }
+    .badge-pending{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);}
+    .badge-approved{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);}
+
+    .msg-text{
+      font-size:14px;color:#94a3b8;line-height:1.7;
+      padding:12px 14px;background:rgba(255,255,255,0.03);
+      border-radius:10px;margin-bottom:14px;word-break:break-word;
+    }
+
+    .msg-actions{display:flex;gap:8px;}
+    .action-btn{
+      padding:8px 16px;border-radius:9px;border:none;
+      font-size:12px;font-weight:600;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all 0.2s;
+      display:flex;align-items:center;gap:6px;
+    }
+    .btn-approve{
+      background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);
+    }
+    .btn-approve:hover{background:rgba(34,197,94,0.25);}
+    .btn-unapprove{
+      background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);
+    }
+    .btn-unapprove:hover{background:rgba(245,158,11,0.2);}
+    .btn-delete{
+      background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);
+    }
+    .btn-delete:hover{background:rgba(239,68,68,0.22);}
+
+    /* Empty state */
+    .empty{
+      text-align:center;padding:60px 20px;color:#64748b;
+      display:flex;flex-direction:column;align-items:center;gap:10px;
+    }
+    .empty span:first-child{font-size:40px;}
+    .empty span:last-child{font-size:14px;}
+
+    /* Toast */
+    .toast{
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      padding:12px 20px;border-radius:12px;
+      font-size:13px;font-weight:600;
+      box-shadow:0 8px 24px rgba(0,0,0,0.4);
+      animation:toastIn 0.3s ease;
+      pointer-events:none;
+    }
+    .toast.ok{background:#166534;color:#4ade80;border:1px solid rgba(34,197,94,0.3);}
+    .toast.err{background:#7f1d1d;color:#f87171;border:1px solid rgba(239,68,68,0.3);}
+    @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+    .loading{text-align:center;padding:40px;color:#64748b;font-size:14px;}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">NH</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">Enter password to manage messages</div>
+    <input class="login-input" type="password" id="passInput" placeholder="••••••••" maxlength="30"/>
+    <button class="login-btn" id="loginBtn">Enter</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="tb-logo">NH</div>
+    <span class="tb-title">Message Admin</span>
+    <span class="tb-badge" id="pendingBadge">0 pending</span>
+  </div>
+  <div class="topbar-right">
+    <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">—</div>
+      <div class="stat-lbl">Total Messages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statPending">—</div>
+      <div class="stat-lbl">Pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statApproved">—</div>
+      <div class="stat-lbl">Approved</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pending" onclick="switchTab('pending',this)">⏳ Pending</button>
+    <button class="tab-btn" data-tab="approved" onclick="switchTab('approved',this)">✅ Approved</button>
+    <button class="tab-btn" data-tab="all" onclick="switchTab('all',this)">📋 All</button>
+  </div>
+
+  <!-- List -->
+  <div class="msg-list" id="msgList">
+    <div class="loading">Loading…</div>
+  </div>
+
+</div>
+
+<script>
+  const SB_URL = 'https://lowmyazvepioltqhdapl.supabase.co';
+  const SB_KEY = 'sb_publishable_L_El4NDwamXNYMJUrufZeg_ICFwMsmR';
+
+  // ── Simple password (change this to whatever you want) ──
+  const ADMIN_PASS = 'Nariman2026';
+  const AUTH_KEY   = 'nh_admin_auth';
+
+  // ── LOGIN ──
+  const loginScreen = document.getElementById('loginScreen');
+
+  function checkAuth() {
+    if (sessionStorage.getItem(AUTH_KEY) === '1') {
+      loginScreen.classList.add('hidden');
+      loadAll();
+    }
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('passInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+  function doLogin() {
+    const val = document.getElementById('passInput').value;
+    if (val === ADMIN_PASS) {
+      sessionStorage.setItem(AUTH_KEY, '1');
+      loginScreen.classList.add('hidden');
+      loadAll();
+    } else {
+      document.getElementById('loginErr').textContent = '❌ Wrong password';
+      document.getElementById('passInput').value = '';
+      setTimeout(() => document.getElementById('loginErr').textContent = '', 2000);
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem(AUTH_KEY);
+    location.reload();
+  }
+
+  // ── SUPABASE FETCH ──
+  async function sbFetch(path, options = {}) {
+    const res = await fetch(`${SB_URL}/rest/v1${path}`, {
+      ...options,
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': options.prefer || '',
+        ...(options.headers || {})
+      }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  // ── STATE ──
+  let allMessages = [];
+  let currentTab  = 'pending';
+
+  async function loadAll() {
+    document.getElementById('msgList').innerHTML = '<div class="loading">Loading…</div>';
+    try {
+      const data = await sbFetch('/messages?select=*&order=created_at.desc');
+      allMessages = data || [];
+      updateStats();
+      renderList();
+    } catch(e) {
+      document.getElementById('msgList').innerHTML = `<div class="empty"><span>❌</span><span>Failed to load: ${e.message}</span></div>`;
+    }
+  }
+
+  function updateStats() {
+    const total    = allMessages.length;
+    const approved = allMessages.filter(m => m.approved).length;
+    const pending  = total - approved;
+    document.getElementById('statTotal').textContent    = total;
+    document.getElementById('statPending').textContent  = pending;
+    document.getElementById('statApproved').textContent = approved;
+    document.getElementById('pendingBadge').textContent = `${pending} pending`;
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+  }
+
+  function renderList() {
+    const list = document.getElementById('msgList');
+    let filtered = allMessages;
+    if (currentTab === 'pending')  filtered = allMessages.filter(m => !m.approved);
+    if (currentTab === 'approved') filtered = allMessages.filter(m => m.approved);
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty"><span>💬</span><span>No messages here</span></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(msg => `
+      <div class="msg-card ${msg.approved ? 'approved' : 'pending'}" id="card-${msg.id}">
+        <div class="msg-header">
+          <div class="msg-avatar">${initials(msg.name)}</div>
+          <div class="msg-meta">
+            <div class="msg-name">${esc(msg.name || 'Anonymous')}</div>
+            <div class="msg-date">${formatDate(msg.created_at)}</div>
+          </div>
+          <span class="msg-status-badge ${msg.approved ? 'badge-approved' : 'badge-pending'}">
+            ${msg.approved ? '✅ Approved' : '⏳ Pending'}
+          </span>
+        </div>
+        <div class="msg-text">${esc(msg.text)}</div>
+        <div class="msg-actions">
+          ${!msg.approved
+            ? `<button class="action-btn btn-approve" onclick="approveMsg('${msg.id}', true)">✅ Approve</button>`
+            : `<button class="action-btn btn-unapprove" onclick="approveMsg('${msg.id}', false)">↩ Unapprove</button>`
+          }
+          <button class="action-btn btn-delete" onclick="deleteMsg('${msg.id}')">🗑 Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function approveMsg(id, approved) {
+    const card = document.getElementById('card-' + id);
+    if (card) card.style.opacity = '0.5';
+    try {
+      await sbFetch(`/messages?id=eq.${id}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({ approved })
+      });
+      const msg = allMessages.find(m => m.id === id);
+      if (msg) msg.approved = approved;
+      updateStats();
+      renderList();
+      showToast(approved ? '✅ Message approved!' : '↩ Message unapproved', 'ok');
+    } catch(e) {
+      showToast('❌ Error: ' + e.message, 'err');
+      if (card) card.style.opacity = '1';
+    }
+  }
+
+  async function deleteMsg(id) {
+    if (!confirm('Delete this message permanently?')) return;
+    const card = document.getElementById('card-' + id);
+    if (card) card.style.opacity = '0.5';
+    try {
+      await sbFetch(`/messages?id=eq.${id}`, { method: 'DELETE' });
+      allMessages = allMessages.filter(m => m.id !== id);
+      updateStats();
+      renderList();
+      showToast('🗑 Message deleted', 'ok');
+    } catch(e) {
+      showToast('❌ Error: ' + e.message, 'err');
+      if (card) card.style.opacity = '1';
+    }
+  }
+
+  function initials(name) {
+    if (!name) return '?';
+    return name.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  }
+
+  function esc(str) {
+    return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + '  ' +
+           d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  // ── INIT ──
+  checkAuth();
+</script>
+</body>
+</html>
