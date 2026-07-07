@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR Code Generator — Nariman Hedayati</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f5f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 40px 20px;
+    }
+
+    h1 { font-size: 18px; color: #374151; font-weight: 600; }
+
+    .url-box {
+      display: flex; gap: 10px; align-items: center;
+      background: #fff; border: 1px solid #e5e7eb;
+      border-radius: 12px; padding: 12px 16px;
+      width: 100%; max-width: 520px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .url-box input {
+      flex: 1; border: none; outline: none;
+      font-size: 14px; color: #111827;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .url-box button {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border: none;
+      padding: 8px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .url-box button:hover { opacity: 0.85; }
+
+    /* The printable QR card */
+    .qr-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.1);
+      border: 1px solid #e5e7eb;
+    }
+    .qr-top {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .qr-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      font-family: sans-serif;
+    }
+    .qr-name { font-size: 16px; font-weight: 700; color: #0d0f14; }
+    .qr-title { font-size: 11px; color: #6b7280; font-weight: 500; }
+
+    #qrcode canvas, #qrcode img { display: block; border-radius: 8px; }
+
+    .qr-url {
+      font-size: 11px; color: #9ca3af;
+      max-width: 220px; text-align: center;
+      word-break: break-all;
+    }
+
+    .actions {
+      display: flex; gap: 12px;
+    }
+    .btn {
+      padding: 10px 24px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.2s;
+    }
+    .btn-print {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+    }
+    .btn-print:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.45); }
+    .btn-secondary {
+      background: #f3f4f6; color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    .btn-secondary:hover { background: #e5e7eb; }
+
+    .hint {
+      font-size: 12px; color: #9ca3af; text-align: center;
+      max-width: 420px; line-height: 1.6;
+    }
+
+    /* Print styles — only show the card */
+    @media print {
+      body { background: #fff; padding: 0; justify-content: flex-start; }
+      h1, .url-box, .actions, .hint { display: none !important; }
+      .qr-card {
+        box-shadow: none; border: none;
+        margin: 0; padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>QR Code Generator — Business Card</h1>
+
+<div class="url-box">
+  <input type="url" id="urlInput" placeholder="Paste your GitHub Pages URL here, e.g. https://username.github.io/cardvisit" />
+  <button onclick="generateQR()">Generate</button>
+</div>
+
+<div class="qr-card" id="qrCard">
+  <div class="qr-top">
+    <div class="qr-logo">NH</div>
+    <div>
+      <div class="qr-name">Nariman Hedayati</div>
+      <div class="qr-title">Computer Systems Specialist</div>
+    </div>
+  </div>
+  <div id="qrcode"></div>
+  <div class="qr-url" id="qrUrlLabel">Enter your URL above and click Generate</div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-print" onclick="window.print()">🖨 Save / Print as PNG</button>
+  <button class="btn btn-secondary" onclick="resetQR()">↺ Reset</button>
+</div>
+
+<p class="hint">
+  After clicking <strong>Save / Print as PNG</strong>, choose <em>"Save as PDF"</em> or use your browser's
+  screenshot tool to export as image. Then hand the PNG to your print shop.
+</p>
+
+<script>
+  // Pre-fill with a default placeholder
+  const DEFAULT = 'https://narimanh3d.github.io/cardvisit';
+  document.getElementById('urlInput').placeholder = DEFAULT;
+
+  let qrInstance = null;
+
+  function generateQR() {
+    const raw = document.getElementById('urlInput').value.trim();
+    const url = raw || DEFAULT;
+
+    // Clear previous
+    const box = document.getElementById('qrcode');
+    box.innerHTML = '';
+    if (qrInstance) { try { qrInstance.clear(); } catch(e){} }
+
+    qrInstance = new QRCode(box, {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#0d0f14',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    document.getElementById('qrUrlLabel').textContent = url;
+  }
+
+  function resetQR() {
+    document.getElementById('urlInput').value = '';
+    document.getElementById('qrcode').innerHTML = '';
+    document.getElementById('qrUrlLabel').textContent = 'Enter your URL above and click Generate';
+  }
+
+  // Auto-generate with default on load
+  generateQR();
+</script>
+</body>
+</html>
